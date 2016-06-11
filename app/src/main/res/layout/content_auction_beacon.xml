@@ -12,8 +12,9 @@
     tools:context="com.beacon.auction.ami.auctionsbeacon.AuctionBeaconActivity"
     tools:showIn="@layout/activity_auction_beacon">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+    <ListView
+        android:id="@+id/lvMain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </ListView>
 </RelativeLayout>

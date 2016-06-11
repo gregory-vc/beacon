@@ -5,7 +5,10 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -15,6 +18,11 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -22,30 +30,46 @@ import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.altbeacon.beacon.utils.UrlBeaconUrlCompressor;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AuctionBeaconActivity extends AppCompatActivity implements BeaconConsumer {
 
     protected static final String TAG = "MonitoringActivity";
     private BeaconManager beaconManager;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+    public Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         setContentView(R.layout.activity_auction_beacon);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         beaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
 // Detect the main identifier (UID) frame:
@@ -58,6 +82,47 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
         beaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout("s:0-1=feaa,m:2-2=10,p:3-3:-41,i:4-20v"));
 
+        beaconManager.setForegroundScanPeriod(1100l); // 1100 mS
+        beaconManager.setForegroundBetweenScanPeriod(30000l); // 30,000ms = 30 seconds
+        try {
+            beaconManager.updateScanPeriods();
+        } catch (RemoteException e) {
+
+        }
+
+        handler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                String text = (String) msg.obj;
+                String[] names = { text };
+                ListView lvMain = (ListView) findViewById(R.id.lvMain);
+                ArrayList<String> list = new ArrayList<String>();
+                URL url;
+                HttpURLConnection connection = null;
+                try {
+                    JSONArray jsonArray = new JSONArray(text);
+                    if (jsonArray != null) {
+                        int len = jsonArray.length();
+                        for (int i=0;i<len;i++){
+                            String targetURL = jsonArray.get(i).toString();
+                            String data = makeGetRequest(targetURL, "");
+                            list.add(targetURL + " : " + data);
+                        }
+
+                    }
+                    // создаем адаптер
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(AuctionBeaconActivity.this,
+                            android.R.layout.simple_list_item_1, list);
+
+                    // присваиваем адаптер списку
+                    lvMain.setAdapter(adapter);
+                } catch (JSONException e) {
+                    Log.i(TAG, e.getMessage());
+                }
+
+
+            }
+        };
 
         setupBeaconManager();
 
@@ -77,6 +142,80 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
                 builder.show();
             }
         }
+    }
+
+    private String makeGetRequest(String targetUrl, String dRetrun) {
+
+        try {
+            URL url = null;
+            String response = null;
+            String parameters = "";
+            url = new URL(targetUrl);
+            //create the connection
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection.setFollowRedirects(true);
+            connection.setDoOutput(true);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestProperty("Content-Type",
+                    "application/x-www-form-urlencoded");
+            //set the request method to GET
+            connection.setRequestMethod("GET");
+            //get the output stream from the connection you created
+            OutputStreamWriter request = new OutputStreamWriter(connection.getOutputStream());
+            //write your data to the ouputstream
+            request.write(parameters);
+            request.flush();
+            request.close();
+            String line = "";
+            //create your inputsream
+            InputStreamReader isr = new InputStreamReader(
+                    connection.getInputStream());
+            //read in the data from input stream, this can be done a variety of ways
+            BufferedReader reader = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            //get the string version of the response data
+
+            int status = connection.getResponseCode();
+            boolean redirect = false;
+            if (status != HttpURLConnection.HTTP_OK) {
+                if (status == HttpURLConnection.HTTP_MOVED_TEMP
+                        || status == HttpURLConnection.HTTP_MOVED_PERM
+                        || status == HttpURLConnection.HTTP_SEE_OTHER)
+                    redirect = true;
+            }
+
+
+
+            if (redirect) {
+                String newUrl = connection.getHeaderField("Location");
+                dRetrun += makeGetRequest(newUrl, dRetrun);
+                Log.i(TAG, newUrl);
+                dRetrun += newUrl;
+            }
+
+            response = sb.toString();
+            Log.i(TAG, response);
+
+            response = response.replaceAll("\\s+", " ");
+            Pattern p = Pattern.compile("<title>(.*?)</title>");
+            Matcher m = p.matcher(response);
+            while (m.find() == true) {
+                dRetrun += m.group(1) + " : ";
+            }
+
+
+            //do what you want with the data now
+
+            //always remember to close your input and output streams
+            isr.close();
+            reader.close();
+        } catch (IOException e) {
+            Log.e("HTTP GET:", e.toString());
+        }
+        return dRetrun;
     }
 
     @Override
@@ -138,11 +277,19 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
 
     @Override
     public void onBeaconServiceConnect() {
+
         beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 if (beacons.size() > 0) {
-                    Log.i(TAG, "The first beacon I see is about "+beacons.iterator().next().getDistance()+" meters away.");
+                    ArrayList<String> myCollection = new ArrayList<String>();
+                    for (Beacon beacon : beacons) {
+                        myCollection.add(UrlBeaconUrlCompressor.uncompress(beacon.getId1().toByteArray()));
+                    }
+                    JSONArray jsArray = new JSONArray(myCollection);
+                    Message msg = new Message();
+                    msg.obj = jsArray.toString();
+                    handler.sendMessage(msg);
                 }
             }
         });
