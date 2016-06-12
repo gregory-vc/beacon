@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.LinearGradient;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -67,13 +68,17 @@ public class Listitemselected extends Activity{
                     JSONObject message = (JSONObject) jsonMess.get(t);
                     String myMessage = (String) message.get("message");
                     Log.i(TAG, myMessage);
-                    list.add(myMessage);
+                    byte[] data = Base64.decode(myMessage, Base64.DEFAULT);
+                    String text = new String(data, "UTF-8");
+                    list.add(text);
                 }
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                         android.R.layout.simple_list_item_1, list);
                 lvMainComment.setAdapter(adapter);
             }
         } catch (JSONException e) {
+
+        } catch (UnsupportedEncodingException e) {
 
         }
 
@@ -89,7 +94,9 @@ public class Listitemselected extends Activity{
                 String text = btn.getText().toString();
 
                 try {
-                    text = new String(text.getBytes("ISO-8859-1"), "UTF-8");
+//                    text = new String(text.getBytes("UTF-8"), "UTF-8");
+                    byte[] base_data = text.getBytes("UTF-8");
+                    text = Base64.encodeToString(base_data, Base64.DEFAULT);
                     Log.i(TAG, hash);
                     Log.i(TAG, text);
                     data.put("hash", hash);
@@ -106,7 +113,9 @@ public class Listitemselected extends Activity{
                                 JSONObject message = (JSONObject) jsonMess.get(t);
                                 String myMessage = (String) message.get("message");
                                 Log.i(TAG, myMessage);
-                                list.add(myMessage);
+                                byte[] dataAdd = Base64.decode(myMessage, Base64.DEFAULT);
+                                text = new String(dataAdd, "UTF-8");
+                                list.add(text);
                             }
                             ArrayAdapter<String> adapter = new ArrayAdapter<String>(Listitemselected.this,
                                     android.R.layout.simple_list_item_1, list);

@@ -111,7 +111,7 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
                         for (int i=0;i<len;i++){
                             String targetURL = jsonArray.get(i).toString();
                             String data = makeGetRequest(targetURL, "");
-                            list.add(targetURL + " : " + data);
+                            list.add(data);
                         }
 
                     }
@@ -206,14 +206,6 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
             }
 
 
-
-            if (redirect) {
-                String newUrl = connection.getHeaderField("Location");
-                dRetrun += makeGetRequest(newUrl, dRetrun);
-                Log.i(TAG, newUrl);
-                dRetrun += newUrl;
-            }
-
             response = sb.toString();
             Log.i(TAG, response);
 
@@ -221,8 +213,19 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
             Pattern p = Pattern.compile("<title>(.*?)</title>");
             Matcher m = p.matcher(response);
             while (m.find() == true) {
-                dRetrun += m.group(1) + " : ";
+                dRetrun += m.group(1);
+                if (dRetrun != null && !dRetrun.isEmpty()) {
+                    return dRetrun;
+                }
             }
+
+            if (redirect) {
+                String newUrl = connection.getHeaderField("Location");
+                dRetrun += makeGetRequest(newUrl, dRetrun);
+                Log.i(TAG, newUrl);
+            }
+
+
 
 
             //do what you want with the data now
