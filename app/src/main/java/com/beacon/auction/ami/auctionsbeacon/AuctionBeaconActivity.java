@@ -1,6 +1,7 @@
 package com.beacon.auction.ami.auctionsbeacon;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,9 +17,11 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -176,8 +179,9 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
             HttpURLConnection.setFollowRedirects(true);
             connection.setDoOutput(true);
             connection.setInstanceFollowRedirects(true);
-            connection.setRequestProperty("Content-Type",
-                    "application/x-www-form-urlencoded");
+            connection.setRequestProperty("Content-Type", "text/html; charset=utf-8");
+            connection.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
+            connection.setRequestProperty("Accept","*/*");
             //set the request method to GET
             connection.setRequestMethod("GET");
             //get the output stream from the connection you created
