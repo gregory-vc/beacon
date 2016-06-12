@@ -3,6 +3,7 @@ package com.beacon.auction.ami.auctionsbeacon;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.LinearGradient;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Base64;
@@ -48,8 +49,24 @@ public class Listitemselected extends Activity{
         TextView txtList_items = (TextView) findViewById(R.id.List_item);
 
         Intent i = getIntent();
-
+        String urlBkon = i.getStringExtra("url_list");
+        Button btnOk2 = (Button) findViewById(R.id.button2);
+        btnOk2.setText(urlBkon);
         // getting attached intent data
+
+
+
+        View.OnClickListener oclBtnOk2 = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = getIntent();
+                String urlBkon = i.getStringExtra("url_list");
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlBkon));
+                startActivity(browserIntent);
+            }
+        };
+
+        btnOk2.setOnClickListener(oclBtnOk2);
 
         String List_items = i.getStringExtra("List_items");
 

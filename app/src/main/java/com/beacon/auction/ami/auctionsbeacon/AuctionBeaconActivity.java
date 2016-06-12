@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,6 +66,8 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
     private BeaconManager beaconManager;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     public Handler handler;
+    public Boolean update = true;
+    ArrayList<String> listUrl = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,6 +114,7 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
                         for (int i=0;i<len;i++){
                             String targetURL = jsonArray.get(i).toString();
                             String data = makeGetRequest(targetURL, "");
+                            listUrl.add(targetURL);
                             list.add(data);
                         }
 
@@ -131,10 +135,11 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
                             String List_items = ((TextView) view).getText().toString();
 
                             /// Launching new Activity on selecting single List Item
-
+                            Log.i(TAG, listUrl.get(position));
                             Intent i = new Intent(getApplicationContext(), Listitemselected.class);
                             /// sending data to new activity
                             i.putExtra("List_items", List_items);
+                            i.putExtra("url_list", listUrl.get(position));
                             startActivity(i);
 
                         }
@@ -302,7 +307,7 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
         beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-                if (beacons.size() > 0) {
+                if (beacons.size() > 0 && update) {
                     ArrayList<String> myCollection = new ArrayList<String>();
                     for (Beacon beacon : beacons) {
                         myCollection.add(UrlBeaconUrlCompressor.uncompress(beacon.getId1().toByteArray()));
@@ -311,6 +316,7 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
                     Message msg = new Message();
                     msg.obj = jsArray.toString();
                     handler.sendMessage(msg);
+                    update = false;
                 }
             }
         });

@@ -20,11 +20,16 @@
         android:textColor="#000000"/>
 
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="New Button"
+        android:id="@+id/button2" />
 
     <ListView
         android:id="@+id/lvMainComment"
-        android:layout_width="match_parent"
-        android:layout_height="181dp"
+        android:layout_width="wrap_content"
+        android:layout_height="422dp"
         android:scrollbars="vertical"
         >
     </ListView>
