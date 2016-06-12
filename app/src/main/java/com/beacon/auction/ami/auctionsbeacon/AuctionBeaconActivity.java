@@ -2,6 +2,7 @@ package com.beacon.auction.ami.auctionsbeacon;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TableLayout;
@@ -83,7 +85,7 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
                 setBeaconLayout("s:0-1=feaa,m:2-2=10,p:3-3:-41,i:4-20v"));
 
         beaconManager.setForegroundScanPeriod(1100l); // 1100 mS
-        beaconManager.setForegroundBetweenScanPeriod(30000l); // 30,000ms = 30 seconds
+        beaconManager.setForegroundBetweenScanPeriod(80000l); // 30,000ms = 30 seconds
         try {
             beaconManager.updateScanPeriods();
         } catch (RemoteException e) {
@@ -116,6 +118,24 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
 
                     // присваиваем адаптер списку
                     lvMain.setAdapter(adapter);
+
+                    lvMain.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        public void onItemClick(AdapterView<?> parent, View view,
+                                                int position, long id) {
+
+                            /// selected item
+
+                            String List_items = ((TextView) view).getText().toString();
+
+                            /// Launching new Activity on selecting single List Item
+
+                            Intent i = new Intent(getApplicationContext(), Listitemselected.class);
+                            /// sending data to new activity
+                            i.putExtra("List_items", List_items);
+                            startActivity(i);
+
+                        }
+                    });
                 } catch (JSONException e) {
                     Log.i(TAG, e.getMessage());
                 }
