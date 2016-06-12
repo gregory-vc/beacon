@@ -177,7 +177,6 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
             //create the connection
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             HttpURLConnection.setFollowRedirects(true);
-            connection.setDoOutput(true);
             connection.setInstanceFollowRedirects(true);
             connection.setRequestProperty("Content-Type", "text/html; charset=utf-8");
             connection.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
@@ -185,11 +184,6 @@ public class AuctionBeaconActivity extends AppCompatActivity implements BeaconCo
             //set the request method to GET
             connection.setRequestMethod("GET");
             //get the output stream from the connection you created
-            OutputStreamWriter request = new OutputStreamWriter(connection.getOutputStream());
-            //write your data to the ouputstream
-            request.write(parameters);
-            request.flush();
-            request.close();
             String line = "";
             //create your inputsream
             InputStreamReader isr = new InputStreamReader(
